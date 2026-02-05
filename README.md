@@ -1,303 +1,163 @@
 # aicert
 
-CI for LLM JSON outputs - Validate, test, and measure LLM outputs for stability and compliance.
+**CI for structured LLM outputs.**
 
-## Quickstart (No API keys required)
+Validate, test, and measure JSON outputs from LLMs for stability, compliance, and latency.
 
-```bash
-# Validate config
-aicert doctor examples/fake_chaos/aicert.yaml
+---
 
-# Run stability tests with chaotic output (tests determinism)
-aicert stability examples/fake_chaos/aicert.yaml
+## Why aicert?
 
-# Run stability tests with extraction example
-aicert stability examples/extraction/aicert.yaml
-```
+LLMs are non-deterministic.
 
-## What it measures
+If you rely on structured JSON outputs, you need to know:
 
-- **Compliance** - % of outputs matching JSON schema
-- **Stability** - % of identical outputs across runs
-- **Latency** - P50/P95 response times
-- **Similarity** - Semantic/structural similarity of outputs
-- **CI gating** - Threshold-based pass/fail for automation
+* Do they consistently match your schema?
+* Are they stable across repeated runs?
+* Are latency and cost within bounds?
+* Will a model or prompt change break production?
+
+`aicert` gives you automated answers — locally and in CI.
+
+---
 
 ## Installation
+
+```bash
+pip install aicert
+```
+
+For development:
 
 ```bash
 pip install -e .
 ```
 
-## Quickstart
+---
 
-### 1. Run the example with FakeAdapter (no API key needed)
+## Quickstart (No API Keys Required)
 
-```bash
-aicert stability examples/aicert.yaml
-```
-
-This runs stability tests using the built-in fake adapter that produces deterministic JSON output.
-
-### 2. Run with real providers
-
-Set your API key and run:
+Run with the built-in fake adapter:
 
 ```bash
-export OPENAI_API_KEY="your-api-key"
-aicert stability examples/aicert.yaml -p openai
+aicert doctor examples/fake_chaos/aicert.yaml
+aicert stability examples/fake_chaos/aicert.yaml
 ```
 
-## Configuration
+Or run the extraction example:
 
-Create a `aicert.yaml` file in your project:
+```bash
+aicert stability examples/extraction/aicert.yaml
+```
+
+---
+
+## What It Measures
+
+* **Compliance** — % of outputs matching JSON Schema
+* **Stability** — % of identical outputs across repeated runs
+* **Latency** — P50 / P95 response times
+* **Similarity** — Structural or semantic output similarity
+* **CI Gating** — Threshold-based pass/fail automation
+
+---
+
+## Basic Workflow
+
+### 1. Create `aicert.yaml`
 
 ```yaml
-# Project name
 project: my-project
 
-# Providers to test
 providers:
   - id: openai-gpt4
     provider: openai
     model: gpt-4
     temperature: 0.1
-  - id: anthropic-claude
-    provider: anthropic
-    model: claude-sonnet-4-20250514
-    temperature: 0.1
 
-# Files
 prompt_file: prompt.txt
 cases_file: cases.jsonl
 schema_file: schema.json
 
-# Test settings
-runs: 50          # Number of runs per test case
-concurrency: 10   # Concurrent requests
-timeout_s: 30    # Request timeout
+runs: 50
+concurrency: 10
+timeout_s: 30
 
-# Validation settings
 validation:
-  extract_json: true     # Try to extract JSON from ```json blocks
-  allow_extra_keys: false # Fail on extra keys not in schema
+  extract_json: true
+  allow_extra_keys: false
 
-# Threshold checks (for CI mode)
 thresholds:
-  min_stability: 85      # Minimum stability percentage
-  min_compliance: 95     # Minimum schema compliance percentage
-  max_cost_usd: 5.00    # Maximum cost in USD
-  p95_latency_ms: 5000  # P95 latency threshold
+  min_stability: 85
+  min_compliance: 95
+  p95_latency_ms: 5000
 
-# CI mode settings
 ci:
-  runs: 10              # Runs per case in CI mode
-  save_on_fail: true   # Save artifacts on failure
+  runs: 10
+  save_on_fail: true
 ```
 
-### Config Fields
+---
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `project` | Yes | Project name for reporting |
-| `providers` | Yes | List of provider configurations |
-| `prompt_file` | Yes | Path to prompt template file |
-| `cases_file` | Yes | Path to test cases (JSONL format) |
-| `schema_file` | Yes | Path to JSON schema file |
-| `runs` | No | Test runs per case (default: 50) |
-| `concurrency` | No | Concurrent requests (default: 10) |
-| `timeout_s` | No | Request timeout in seconds (default: 30) |
-| `validation.extract_json` | No | Extract JSON from blocks (default: true) |
-| `validation.allow_extra_keys` | No | Allow extra keys (default: false) |
-| `thresholds.*` | No | Optional threshold values |
-| `ci.runs` | No | CI mode runs (default: 10) |
-| `ci.save_on_fail` | No | Save artifacts on failure (default: true) |
+### 2. Run Stability Tests
 
-### Provider Configuration
+```bash
+aicert stability aicert.yaml
+```
+
+---
+
+### 3. Run in CI Mode
+
+```bash
+aicert ci aicert.yaml
+```
+
+This exits non-zero if thresholds fail.
+
+---
+
+## Provider Configuration
 
 ```yaml
 providers:
-  # OpenAI
-  - id: openai-gpt4
+  - id: openai
     provider: openai
     model: gpt-4
     temperature: 0.1
 
-  # Anthropic
-  - id: anthropic-claude
+  - id: anthropic
     provider: anthropic
     model: claude-sonnet-4-20250514
     temperature: 0.1
 
-  # OpenAI-compatible (e.g., local models, Azure)
-  - id: local-llama
+  - id: local
     provider: openai_compatible
     model: llama-3.1-8b
     base_url: http://localhost:8000/v1
     temperature: 0.1
 
-  # Fake adapter for testing
-  - id: fake-test
+  - id: fake
     provider: fake
     model: fake-model
-    temperature: 0.1
 ```
 
-### Environment Variables
+---
+
+## Commands
 
 ```bash
-OPENAI_API_KEY      # OpenAI API key
-ANTHROPIC_API_KEY   # Anthropic API key
+aicert init
+aicert doctor aicert.yaml
+aicert run aicert.yaml
+aicert stability aicert.yaml
+aicert compare aicert.yaml
+aicert ci aicert.yaml
+aicert diff <run_a> <run_b>
+aicert report <run_dir>
 ```
 
-## Prompt Templates
-
-Prompts support variable substitution using `$variable` or `${variable}` syntax:
-
-```text
-You are a helpful assistant. Respond to this question: $question
-
-Context: $context
-```
-
-## Test Cases (JSONL Format)
-
-Each line is a JSON object with test case data:
-
-```jsonl
-{"name": "test_math", "prompt": "What is 2 + 2?", "variables": {"question": "What is 2 + 2?"}}
-{"name": "test_capitals", "prompt": "What is the capital of France?", "variables": {"question": "What is the capital of France?"}}
-```
-
-Fields:
-- `name`: Test case identifier
-- `prompt`: Template string (variables will be substituted)
-- `variables`: Dict of variables for substitution
-
-## JSON Schema
-
-Validate outputs against a JSON Schema:
-
-```json
-{
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "type": "object",
-  "properties": {
-    "answer": {
-      "type": "string",
-      "description": "The answer to the question"
-    },
-    "confidence": {
-      "type": "number",
-      "minimum": 0,
-      "maximum": 1
-    }
-  },
-  "required": ["answer", "confidence"],
-  "additionalProperties": false
-}
-```
-
-## Example Commands
-
-### Run test cases once
-
-```bash
-aicert run examples/aicert.yaml
-```
-
-### Run stability tests
-
-```bash
-aicert stability examples/aicert.yaml
-```
-
-### Compare providers
-
-```bash
-aicert compare examples/aicert.yaml
-```
-
-### CI mode with threshold checking
-
-```bash
-aicert ci examples/aicert.yaml
-```
-
-### Override settings
-
-```bash
-# Override provider
-aicert stability examples/aicert.yaml -p fake
-
-# Override concurrency
-aicert stability examples/aicert.yaml --concurrency 5
-
-# Disable JSON extraction
-aicert stability examples/aicert.yaml --no-extract-json
-```
-
-### Save artifacts to specific directory
-
-```bash
-aicert stability examples/aicert.yaml -o ./results
-```
-
-## Baselines
-
-Baselines allow you to track performance metrics over time and detect regressions. Save a baseline when your tests are performing well, then compare future runs against it.
-
-### Recommended: Commit baselines to version control
-
-For best results, commit your baseline files to your repository. This allows you to:
-- Track performance trends over commits
-- Detect regressions in pull requests
-- Maintain baselines alongside your code
-
-We recommend using a dedicated directory like `aicert_baselines/` (not `.aicert/`) for committed baselines:
-
-```bash
-# Save a baseline to the aicert_baselines/ directory
-aicert baseline save examples/aicert.yaml --baseline-dir ./aicert_baselines
-
-# Check against baseline
-aicert baseline check examples/aicert.yaml --baseline-dir ./aicert_baselines
-```
-
-### Baseline Commands
-
-#### Save a baseline from a run
-
-```bash
-# Save baseline from a previous run directory
-aicert baseline from-run ./run_abc123 --baseline-dir ./aicert_baselines
-
-# Run and save baseline in one command
-aicert baseline save examples/aicert.yaml --baseline-dir ./aicert_baselines
-```
-
-#### Check against baseline
-
-```bash
-# Run CI evaluation and check against baseline
-aicert baseline check examples/aicert.yaml --baseline-dir ./aicert_baselines
-
-# Check existing run directory against baseline
-aicert baseline check --from-run ./run_abc123 --baseline-dir ./aicert_baselines
-```
-
-### Baseline Directory Structure
-
-When using `--baseline-dir`, baselines are saved as `<baseline-dir>/<project>.json`:
-
-```
-./
-├── aicert.yaml
-├── aicert_baselines/
-│   ├── my-project.json    # Baseline for my-project
-│   └── another-project.json
-└── ...
-```
+---
 
 ## GitHub Actions Example
 
@@ -316,73 +176,61 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       
-      - name: Install dependencies
-        run: |
-          pip install -e .
+      - run: pip install aicert
       
-      - name: Run stability tests
+      - run: aicert ci aicert.yaml
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: aicert ci examples/aicert.yaml
-        id: aicert
-      
-      - name: Upload artifacts on failure
-        if: failure() && steps.aicert.outcome == 'failure'
-        uses: actions/upload-artifact@v4
-        with:
-          name: aicert-results
-          path: .aicert/
 ```
+
+---
+
+## JSON Schema Validation
+
+`aicert` validates outputs against your JSON Schema:
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "answer": { "type": "string" },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+  },
+  "required": ["answer", "confidence"],
+  "additionalProperties": false
+}
+```
+
+---
+
+## Aicert Pro
+
+Aicert Pro adds:
+
+* Baseline saving and comparison
+* Regression enforcement across commits
+* Prompt/schema drift detection
+* Cost regression protection
+
+Learn more: **[https://yourdomain.com](https://yourdomain.com)**
+
+---
 
 ## Exit Codes
 
-| Code | Meaning |
-|------|---------|
-| 0 | All checks passed |
-| 1 | Runtime error |
-| 2 | Threshold check failed (CI mode) |
-| 3 | Config/schema error |
-| 4 | Provider/auth error |
+| Code | Meaning                     |
+| ---- | --------------------------- |
+| 0    | Success                     |
+| 2    | Threshold failure (CI mode) |
+| 3    | Config/schema error         |
+| 4    | Provider/auth error         |
 
-## Features
-
-- **Template-based prompts** - Use variables in your prompts
-- **JSON Schema validation** - Validate LLM outputs against schemas
-- **Multiple providers** - Support for OpenAI, Anthropic, and OpenAI-compatible endpoints
-- **Metrics and reporting** - Track stability, compliance, latency, and cost
-- **Async execution** - Efficiently run multiple test cases concurrently
-- **CI integration** - Threshold-based pass/fail with artifact saving
+---
 
 ## License
 
 MIT
-
----
-
-## Beta Access
-
-**aicert is currently in private beta.**
-
-During this phase:
-- You bring your own provider API keys (OpenAI, Anthropic, or OpenAI-compatible endpoints)
-- No subscription or payment is required
-- Access is invitation-only via private GitHub repository
-
-### Request Access
-
-To request access to the private beta, please contact: **support@example.com**
-
-### Installation
-
-Once granted access, install from the private repository:
-
-```bash
-pip install git+https://github.com/<org>/<repo>.git@v0.1.0-beta
-```
-
-See [BETA.md](BETA.md) for full beta documentation.
