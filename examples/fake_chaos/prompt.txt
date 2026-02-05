@@ -1,0 +1,4 @@
+You are a helpful assistant. Please respond with JSON matching this schema:
+{{ schema_hint }}
+
+Input: {{ input }}

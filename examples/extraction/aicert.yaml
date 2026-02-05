@@ -1,0 +1,1 @@
+{"provider": "fake", "runs": 10, "concurrency": 5, "prompt_file": "prompt.txt", "cases_file": "cases.jsonl", "schema_file": "schema.json"}

@@ -1,0 +1,182 @@
+"""Anthropic provider for LLM API calls."""
+
+import os
+from typing import Any, Dict, Optional
+
+import httpx
+
+from aicert.providers.base import BaseProvider
+
+
+class AnthropicProvider(BaseProvider):
+    """Anthropic provider implementation using the Messages API."""
+
+    DEFAULT_BASE_URL = "https://api.anthropic.com"
+    API_KEY_ENV = "ANTHROPIC_API_KEY"
+    API_VERSION = "2023-06-01"
+
+    def __init__(
+        self,
+        model: str,
+        api_key: Optional[str] = None,
+        base_url: Optional[str] = None,
+        temperature: float = 0.7,
+        **kwargs,
+    ):
+        super().__init__(model=model, api_key=api_key, base_url=base_url, **kwargs)
+        self.temperature = temperature
+        self._client: Optional[httpx.AsyncClient] = None
+
+    @property
+    def api_key(self) -> str:
+        """Get API key from environment if not set."""
+        if self._api_key is None:
+            api_key = os.environ.get(self.API_KEY_ENV)
+            if not api_key:
+                raise ValueError(
+                    f"API key not found. Set {self.API_KEY_ENV} environment variable "
+                    "or pass api_key to the provider."
+                )
+            return api_key
+        return self._api_key
+
+    @api_key.setter
+    def api_key(self, value: Optional[str]):
+        self._api_key = value
+
+    @property
+    def base_url(self) -> str:
+        """Get base URL for API calls."""
+        if self._base_url is None:
+            return self.DEFAULT_BASE_URL
+        return self._base_url
+
+    async def _get_client(self) -> httpx.AsyncClient:
+        """Get or create async HTTP client."""
+        if self._client is None:
+            self._client = httpx.AsyncClient(
+                timeout=httpx.Timeout(60.0),
+                headers={
+                    "x-api-key": self.api_key,
+                    "anthropic-version": self.API_VERSION,
+                    "Content-Type": "application/json",
+                },
+            )
+        return self._client
+
+    async def close(self):
+        """Close the HTTP client."""
+        if self._client:
+            await self._client.aclose()
+            self._client = None
+
+    def _transform_response(self, response_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Transform Anthropic response to OpenAI-compatible format."""
+        choices = []
+        for content in response_data.get("content", []):
+            if content.get("type") == "text":
+                choices.append({
+                    "message": {
+                        "content": content.get("text", ""),
+                    },
+                    "index": 0,
+                    "finish_reason": response_data.get("stop_reason", "stop"),
+                })
+                break
+
+        usage = response_data.get("usage", {})
+        # Anthropic uses different field names
+        transformed_usage = {
+            "prompt_tokens": usage.get("input_tokens", 0),
+            "completion_tokens": usage.get("output_tokens", 0),
+        }
+
+        return {
+            "choices": choices,
+            "usage": transformed_usage,
+            "raw": response_data,
+        }
+
+    async def generate(self, prompt: str, **kwargs) -> Dict[str, Any]:
+        """Generate a response from Anthropic."""
+        client = await self._get_client()
+
+        url = f"{self.base_url}/v1/messages"
+
+        payload = {
+            "model": self.model,
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": 4096,
+            "temperature": self.temperature,
+        }
+
+        try:
+            response = await client.post(url, json=payload)
+        except httpx.RequestError as e:
+            raise ConnectionError(f"Failed to connect to Anthropic API: {e}")
+
+        if not response.is_success:
+            status_code = response.status_code
+            try:
+                error_data = response.json()
+                error_msg = error_data.get("error", {}).get("message", response.text)
+            except Exception:
+                error_msg = response.text
+
+            if status_code in (429, 500, 502, 503, 504):
+                from aicert.runner import RetriableError
+                raise RetriableError(f"Anthropic API error ({status_code}): {error_msg}")
+            else:
+                raise ValueError(f"Anthropic API error ({status_code}): {error_msg}")
+
+        result = response.json()
+
+        return self._transform_response(result)
+
+    async def generate_stream(self, prompt: str, **kwargs):
+        """Generate a streaming response from Anthropic."""
+        client = await self._get_client()
+
+        url = f"{self.base_url}/v1/messages"
+
+        payload = {
+            "model": self.model,
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": 4096,
+            "temperature": self.temperature,
+            "stream": True,
+        }
+
+        try:
+            async with client.stream("POST", url, json=payload) as response:
+                if not response.is_success:
+                    status_code = response.status_code
+                    try:
+                        error_data = await response.json()
+                        error_msg = error_data.get("error", {}).get("message", await response.aread())
+                    except Exception:
+                        error_msg = await response.aread()
+
+                    if status_code in (429, 500, 502, 503, 504):
+                        from aicert.runner import RetriableError
+                        raise RetriableError(f"Anthropic API error ({status_code}): {error_msg}")
+                    else:
+                        raise ValueError(f"Anthropic API error ({status_code}): {error_msg}")
+
+                async for line in response.aiter_lines():
+                    if line.startswith("data: "):
+                        data = line[6:]
+                        if data == "[DONE]":
+                            break
+                        try:
+                            chunk = __import__("json").loads(data)
+                            yield chunk
+                        except Exception:
+                            continue
+        except httpx.RequestError as e:
+            raise ConnectionError(f"Failed to connect to Anthropic API: {e}")
+
+    @property
+    def provider_type(self) -> str:
+        """Return the provider type identifier."""
+        return "anthropic"

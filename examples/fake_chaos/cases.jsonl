@@ -1,0 +1,10 @@
+{"name": "math_2_plus_2", "prompt": "What is {{ question }}?", "variables": {"question": "2 + 2"}}
+{"name": "capital_france", "prompt": "What is the capital of {{ country }}?", "variables": {"country": "France"}}
+{"name": "capital_germany", "prompt": "What is the capital of {{ country }}?", "variables": {"country": "Germany"}}
+{"name": "planets_count", "prompt": "How many planets in {{ system }}?", "variables": {"system": "our solar system"}}
+{"name": "capital_japan", "prompt": "What is the capital of {{ country }}?", "variables": {"country": "Japan"}}
+{"name": "math_5_plus_7", "prompt": "What is {{ question }}?", "variables": {"question": "5 + 7"}}
+{"name": "capital_uk", "prompt": "What is the capital of {{ country }}?", "variables": {"country": "United Kingdom"}}
+{"name": "planets_exoplanet", "prompt": "How many planets in {{ system }}?", "variables": {"system": "the Trappist-1 system"}}
+{"name": "math_10_minus_3", "prompt": "What is {{ question }}?", "variables": {"question": "10 - 3"}}
+{"name": "capital_canada", "prompt": "What is the capital of {{ country }}?", "variables": {"country": "Canada"}}

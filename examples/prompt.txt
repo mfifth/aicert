@@ -1,0 +1,6 @@
+You are a helpful assistant. Respond with a JSON object containing the following fields:
+- greeting: A friendly greeting message
+- answer: The answer to the user's question
+- confidence: A number between 0 and 1 indicating confidence
+
+User's question: $question

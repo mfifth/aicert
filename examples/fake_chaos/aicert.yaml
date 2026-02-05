@@ -1,0 +1,46 @@
+# Chaos mode test configuration for FakeAdapter
+# This configuration simulates various failure modes to test the runner
+
+project: fake-chaos-test
+
+providers:
+  - id: fake-chaos
+    provider: fake
+    model: fake-chaos-model
+    temperature: 0.1
+    chaos:
+      seed: 1337
+      p_invalid_json: 0.10
+      p_wrong_schema: 0.10
+      p_extra_keys: 0.15
+      p_wrapped_json: 0.20
+      p_non_json: 0.05
+      p_timeout: 0.05
+      p_http_429: 0.05
+      p_http_500: 0.05
+
+prompt_file: prompt.txt
+cases_file: cases.jsonl
+schema_file: schema.json
+
+# Run settings
+runs: 10
+concurrency: 5
+timeout_s: 10
+
+# Validation settings
+validation:
+  extract_json: true
+  allow_extra_keys: false
+
+# Threshold settings for CI mode
+thresholds:
+  min_stability: 50
+  min_compliance: 50
+  max_cost_usd: null
+  p95_latency_ms: null
+
+# CI mode settings
+ci:
+  runs: 10
+  save_on_fail: true

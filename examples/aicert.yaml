@@ -1,0 +1,36 @@
+# aicert configuration file
+# Example configuration for validating LLM JSON outputs
+#
+# To use with real providers (OpenAI, Anthropic), change the provider below
+# and set your API key: export OPENAI_API_KEY="your-key"
+
+project: example-project
+
+# Fake adapter for testing - produces deterministic JSON output
+# For real testing, change to: provider: openai, model: gpt-4
+providers:
+  - id: fake-test
+    provider: fake
+    model: fake-model
+    temperature: 0.1
+
+prompt_file: prompt.txt
+cases_file: cases.jsonl
+schema_file: schema.json
+
+# Fewer runs for faster testing
+runs: 10
+concurrency: 5
+timeout_s: 30
+
+validation:
+  extract_json: true
+  allow_extra_keys: false
+
+thresholds:
+  min_stability: 85
+  min_compliance: 95
+
+ci:
+  runs: 10
+  save_on_fail: true

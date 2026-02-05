@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "answer": {
+      "type": "string",
+      "description": "The answer to the user's question"
+    },
+    "citations": {
+      "type": "array",
+      "description": "List of citations supporting the answer",
+      "items": {
+        "type": "object",
+        "properties": {
+          "source_id": {
+            "type": "string",
+            "description": "Identifier matching the source filename (without extension)"
+          },
+          "quote": {
+            "type": "string",
+            "description": "Short verbatim quote from the source supporting the answer"
+          }
+        },
+        "required": ["source_id", "quote"]
+      }
+    },
+    "unsupported_claims": {
+      "type": "array",
+      "description": "Claims made in the answer that are not supported by the provided sources",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": ["answer", "citations", "unsupported_claims"]
+}
