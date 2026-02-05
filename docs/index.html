@@ -3,232 +3,568 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Aicert — CI for Structured LLM Outputs</title>
+  <title>Aicert — Reliability tooling for structured LLM outputs</title>
+  <meta name="description" content="Aicert measures and enforces JSON stability for LLM outputs in CI. Validate schema compliance, quantify drift across runs, and block regressions before deployment." />
   <style>
+    :root{
+      --bg:#0f172a;
+      --panel:#111c33;
+      --card:#1e293b;
+      --text:#e2e8f0;
+      --muted:#cbd5e1;
+      --muted2:#94a3b8;
+      --border:#334155;
+      --border2:#475569;
+      --accent:#3b82f6;
+      --accent2:#2563eb;
+      --good:#22c55e;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+    }
+
+    html { scroll-behavior: smooth; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       margin: 0;
       padding: 0;
-      background: #0f172a;
-      color: #e2e8f0;
+      background: var(--bg);
+      color: var(--text);
       line-height: 1.6;
     }
 
     .container {
-      max-width: 900px;
+      max-width: 980px;
       margin: 0 auto;
       padding: 40px 20px;
     }
 
+    .topbar{
+      position: sticky;
+      top: 0;
+      background: rgba(15,23,42,0.8);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(51,65,85,0.7);
+      z-index: 100;
+    }
+    .topbar .container{
+      padding: 14px 20px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 16px;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+    .dot{
+      width:10px;height:10px;border-radius:50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+    }
+    .nav{
+      display:flex;
+      gap: 14px;
+      align-items:center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .nav a{
+      color: var(--muted2);
+      text-decoration:none;
+      font-weight:600;
+      font-size: 14px;
+    }
+    .nav a:hover{ color: var(--text); }
+
     h1, h2, h3 {
-      margin-bottom: 16px;
+      margin: 0 0 14px;
       color: #ffffff;
+      line-height: 1.25;
     }
 
-    h1 {
-      font-size: 44px;
-      line-height: 1.2;
-    }
+    h1 { font-size: 44px; }
+    h2 { margin-top: 70px; font-size: 28px; }
+    h3 { font-size: 18px; }
 
-    h2 {
-      margin-top: 80px;
-      font-size: 28px;
-    }
-
-    p {
-      margin-bottom: 20px;
-      color: #cbd5e1;
-    }
+    p { margin: 0 0 18px; color: var(--muted); }
 
     .hero {
-      padding-top: 80px;
-      padding-bottom: 80px;
+      padding-top: 70px;
+      padding-bottom: 30px;
+    }
+
+    .lead {
+      font-size: 17px;
+      max-width: 750px;
+    }
+
+    .pillrow{
+      display:flex;
+      gap:10px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+      margin-bottom: 18px;
+    }
+    .pill{
+      border: 1px solid var(--border2);
+      color: var(--muted2);
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      background: rgba(30,41,59,0.35);
+    }
+
+    .cta-row{
+      display:flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+      align-items: center;
     }
 
     .btn {
       display: inline-block;
-      margin-right: 12px;
-      margin-top: 10px;
-      padding: 12px 20px;
-      border-radius: 6px;
+      padding: 12px 18px;
+      border-radius: 8px;
       text-decoration: none;
-      font-weight: 600;
+      font-weight: 700;
       transition: 0.2s ease;
+      font-size: 14px;
+      border: 1px solid transparent;
     }
 
     .btn-primary {
-      background: #3b82f6;
+      background: var(--accent);
       color: white;
     }
-
-    .btn-primary:hover {
-      background: #2563eb;
-    }
+    .btn-primary:hover { background: var(--accent2); }
 
     .btn-outline {
-      border: 1px solid #475569;
-      color: #e2e8f0;
+      border: 1px solid var(--border2);
+      color: var(--text);
+      background: transparent;
     }
+    .btn-outline:hover { border-color: var(--muted2); }
 
-    .btn-outline:hover {
-      border-color: #94a3b8;
+    .btn-ghost{
+      border: 1px solid transparent;
+      color: var(--muted2);
+      background: transparent;
+      padding-left: 10px;
+      padding-right: 10px;
+    }
+    .btn-ghost:hover{ color: var(--text); }
+
+    .subnote{
+      margin-top: 14px;
+      color: var(--muted2);
+      font-size: 14px;
     }
 
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 30px;
-      margin-top: 40px;
+      gap: 22px;
+      margin-top: 26px;
     }
 
     .card {
-      background: #1e293b;
-      padding: 30px;
-      border-radius: 8px;
+      background: rgba(30,41,59,0.85);
+      border: 1px solid rgba(51,65,85,0.7);
+      padding: 22px;
+      border-radius: 12px;
     }
 
     .highlight {
-      border: 2px solid #3b82f6;
+      border: 2px solid rgba(59,130,246,0.75);
+      box-shadow: 0 0 0 4px rgba(59,130,246,0.08);
+    }
+
+    .metric-grid{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-top: 20px;
+    }
+    .metric{
+      background: rgba(17,28,51,0.65);
+      border: 1px solid rgba(51,65,85,0.7);
+      border-radius: 12px;
+      padding: 16px 16px 14px;
+    }
+    .metric .k{
+      font-size: 12px;
+      color: var(--muted2);
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .metric .v{
+      font-size: 18px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+    .metric .d{
+      font-size: 13px;
+      color: var(--muted);
+      margin:0;
+    }
+
+    .codeblock {
+      background: rgba(17,28,51,0.65);
+      border: 1px solid rgba(51,65,85,0.7);
+      border-radius: 12px;
+      padding: 16px;
+      overflow-x: auto;
+      font-size: 13px;
+      color: #e5e7eb;
+    }
+    pre { margin: 0; white-space: pre; }
+
+    .split{
+      display:grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 22px;
+      align-items: start;
+      margin-top: 26px;
+    }
+    @media (max-width: 860px){
+      .split { grid-template-columns: 1fr; }
     }
 
     .price {
       font-size: 34px;
-      font-weight: bold;
-      margin: 10px 0 5px;
+      font-weight: 900;
+      margin: 6px 0 0;
     }
-
     .subtext {
       font-size: 14px;
-      color: #94a3b8;
-      margin-bottom: 20px;
+      color: var(--muted2);
+      margin: 8px 0 16px;
     }
 
-    ul {
-      padding-left: 18px;
+    ul { margin: 10px 0 0; padding-left: 18px; }
+    li { color: var(--muted); margin: 6px 0; }
+
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted2);
+      margin-bottom: 10px;
     }
+    .tag span{
+      width:8px;height:8px;border-radius:50%;
+      background: rgba(148,163,184,0.9);
+    }
+    .tag .prodot{ background: rgba(59,130,246,0.95); }
+
+    .divider{
+      height:1px;
+      background: rgba(51,65,85,0.7);
+      margin: 18px 0;
+    }
+
+    .faq details{
+      background: rgba(30,41,59,0.85);
+      border: 1px solid rgba(51,65,85,0.7);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin: 10px 0;
+    }
+    .faq summary{
+      cursor:pointer;
+      font-weight: 800;
+      color: #fff;
+    }
+    .faq p{ margin-top: 10px; margin-bottom: 0; color: var(--muted); }
 
     footer {
-      margin-top: 100px;
-      padding-top: 40px;
-      border-top: 1px solid #334155;
+      margin-top: 90px;
+      padding-top: 28px;
+      border-top: 1px solid rgba(51,65,85,0.7);
       font-size: 14px;
-      color: #94a3b8;
+      color: var(--muted2);
     }
+    footer a{ color: var(--muted); }
+    footer a:hover{ color: var(--text); }
 
-    a {
-      color: #60a5fa;
-    }
-
-    code {
-      background: #1e293b;
-      padding: 4px 6px;
-      border-radius: 4px;
-      font-size: 14px;
+    .tiny{
+      font-size: 13px;
+      color: var(--muted2);
     }
   </style>
 </head>
 <body>
 
+  <div class="topbar">
+    <div class="container">
+      <div class="brand"><span class="dot"></span> aicert</div>
+      <div class="nav">
+        <a href="#how">How it works</a>
+        <a href="#examples">Examples</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#faq">FAQ</a>
+        <a href="https://github.com/mfifth/aicert">GitHub</a>
+      </div>
+    </div>
+  </div>
+
   <div class="container hero">
-    <h1>CI for Structured LLM Outputs</h1>
-    <p>
-      Measure stability. Enforce JSON contracts. Detect regressions before deployment.
+    <h1>Reliability tooling for structured LLM outputs</h1>
+    <p class="lead">
+      Validate JSON schema compliance, measure stability across repeated runs, and enforce CI thresholds.
+      Aicert makes structured LLM output testable like any other production dependency.
     </p>
 
-    <a href="https://github.com/mfifth/aicert" class="btn btn-outline">
-      View on GitHub (MIT)
-    </a>
+    <div class="pillrow">
+      <div class="pill">Schema compliance</div>
+      <div class="pill">Stability / drift</div>
+      <div class="pill">Latency</div>
+      <div class="pill">CI gating</div>
+      <div class="pill">Fake + chaos testing</div>
+    </div>
 
-    <a href="https://buy.stripe.com/bJe9ATbyf9ww35U7TT1kA02" class="btn btn-primary">
-      Get Aicert Pro
-    </a>
+    <div class="cta-row">
+      <a href="https://github.com/mfifth/aicert" class="btn btn-outline">View OSS on GitHub (MIT)</a>
+      <a href="https://buy.stripe.com/bJe9ATbyf9ww35U7TT1kA02" class="btn btn-primary">Get Aicert Pro</a>
+      <a href="#examples" class="btn btn-ghost">See examples</a>
+    </div>
 
-    <p style="margin-top:20px;">
+    <p class="subnote">
       Try it instantly with the built-in FakeAdapter — no API keys required.
     </p>
+
+    <div class="metric-grid" style="margin-top:26px;">
+      <div class="metric">
+        <div class="k">Compliance</div>
+        <div class="v">Does it match schema?</div>
+        <p class="d">Percent of outputs that validate against your JSON Schema.</p>
+      </div>
+      <div class="metric">
+        <div class="k">Stability</div>
+        <div class="v">Is it repeatable?</div>
+        <p class="d">Percent of identical outputs across repeated runs.</p>
+      </div>
+      <div class="metric">
+        <div class="k">Latency</div>
+        <div class="v">Will it hold up?</div>
+        <p class="d">P50 / P95 response times, tracked per provider and config.</p>
+      </div>
+      <div class="metric">
+        <div class="k">CI gating</div>
+        <div class="v">Block regressions</div>
+        <p class="d">Fail builds when reliability thresholds are exceeded.</p>
+      </div>
+    </div>
   </div>
 
-  <div class="container">
-    <h2>The Problem</h2>
+  <div class="container" id="how">
+    <h2>How it works</h2>
+
+    <div class="split">
+      <div class="card">
+        <p style="margin-bottom:12px;">
+          Aicert runs the same structured prompt across your test cases multiple times, then computes reliability metrics:
+          schema compliance, stability, latency, and drift. You can enforce thresholds in CI to block regressions.
+        </p>
+
+        <div class="divider"></div>
+
+        <div class="codeblock">
+<pre>pip install aicert
+aicert init
+aicert ci aicert.yaml</pre>
+        </div>
+
+        <p class="tiny" style="margin-top:12px;">
+          You can use your own AI provider keys but the FakeAdapter lets you run end-to-end locally to see it for yourself.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>What you get</h3>
+        <ul>
+          <li>Repeatable evaluation runs (with concurrency)</li>
+          <li>Schema validation + optional JSON extraction</li>
+          <li>Per-provider summaries and CI-friendly exit codes</li>
+          <li>Artifacts for debugging failures</li>
+        </ul>
+
+        <div class="divider"></div>
+
+        <h3>Where it fits</h3>
+        <ul>
+          <li>LLM-powered API endpoints returning JSON</li>
+          <li>Extraction / classification pipelines</li>
+          <li>Workflow automation and “agent” outputs</li>
+          <li>Any system where JSON drives downstream logic</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="container" id="examples">
+    <h2>Examples</h2>
     <p>
-      LLMs are non-deterministic. Structured JSON outputs drift across runs.
-      Prompt changes, model upgrades, and temperature tweaks introduce silent regressions.
+      These examples run locally (FakeAdapter / chaos mode) and illustrate the kinds of failures Aicert catches.
     </p>
-    <p>
-      Traditional CI does not detect schema instability or structural drift.
-    </p>
-  </div>
-
-  <div class="container">
-    <h2>How It Works</h2>
-    <code>pip install aicert</code><br><br>
-    <code>aicert init</code><br><br>
-    <code>aicert ci aicert.yaml</code>
-  </div>
-
-  <div class="container">
-    <h2>Free vs Pro</h2>
 
     <div class="grid">
       <div class="card">
-        <h3>Aicert (Free, MIT)</h3>
-        <ul>
-          <li>JSON Schema validation</li>
-          <li>Stability measurement</li>
-          <li>Latency tracking</li>
-          <li>Threshold-based CI gating</li>
-          <li>Multi-provider testing</li>
-          <li>Fake + chaos testing</li>
-        </ul>
+        <h3>1) Validate config & inputs</h3>
+        <div class="codeblock"><pre>aicert doctor examples/fake_chaos/aicert.yaml</pre></div>
+        <p class="tiny" style="margin-top:10px;">
+          Confirms files exist, schema is valid, cases are parseable, provider config is sane.
+        </p>
       </div>
 
-      <div class="card highlight">
-        <h3>Aicert Pro</h3>
-        <ul>
-          <li>Baseline registry</li>
-          <li>Regression enforcement</li>
-          <li>Prompt drift detection</li>
-          <li>Schema drift enforcement</li>
-          <li>Cost regression protection</li>
-          <li>Signed offline license</li>
-        </ul>
+      <div class="card">
+        <h3>2) Stability under chaos (no keys)</h3>
+        <div class="codeblock"><pre>aicert stability examples/fake_chaos/aicert.yaml</pre></div>
+        <p class="tiny" style="margin-top:10px;">
+          Simulates malformed JSON, wrong schemas, wrapped JSON, timeouts, and HTTP errors to test your pipeline robustness.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>3) CI gating</h3>
+        <div class="codeblock"><pre>aicert ci aicert.yaml</pre></div>
+        <p class="tiny" style="margin-top:10px;">
+          Fails the build when thresholds (compliance / stability / latency / cost) are not met.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>4) Compare providers</h3>
+        <div class="codeblock"><pre>aicert compare aicert.yaml</pre></div>
+        <p class="tiny" style="margin-top:10px;">
+          Run the same suite across providers and configurations to make tradeoffs explicit.
+        </p>
       </div>
     </div>
   </div>
 
   <div class="container" id="pricing">
-    <h2>Pricing</h2>
+    <h2>Free vs Pro</h2>
 
     <div class="grid">
       <div class="card">
-        <h3>Monthly</h3>
-        <div class="price">$29<span style="font-size:16px;">/month</span></div>
-        <div class="subtext">Cancel anytime</div>
-        <a href="https://buy.stripe.com/5kQeVd31J2448qeded1kA01" class="btn btn-outline">
-          Subscribe Monthly
-        </a>
+        <div class="tag"><span></span> Core (Free, MIT)</div>
+        <ul>
+          <li>JSON Schema validation</li>
+          <li>Stability measurement across repeated runs</li>
+          <li>Latency tracking (P50 / P95)</li>
+          <li>Threshold-based CI gating</li>
+          <li>Multi-provider testing</li>
+          <li>Fake + chaos testing</li>
+        </ul>
+        <div class="divider"></div>
+        <a class="btn btn-outline" href="https://github.com/mfifth/aicert">Install Free</a>
       </div>
 
       <div class="card highlight">
-        <h3>Annual</h3>
-        <div class="price">$290<span style="font-size:16px;">/year</span></div>
-        <div class="subtext">2 months free</div>
-        <a href="https://buy.stripe.com/bJe9ATbyf9ww35U7TT1kA02" class="btn btn-primary">
-          Subscribe Annually
-        </a>
+        <div class="tag"><span class="prodot"></span> Pro (Enforcement layer)</div>
+        <p class="tiny" style="margin-top:0;">
+          Pro turns measurement into enforcement: lock known-good baselines and fail CI on regressions.
+        </p>
+        <ul>
+          <li><strong>Baseline locking</strong> — capture a known-good state</li>
+          <li><strong>Regression enforcement</strong> — block stability/compliance drift</li>
+          <li><strong>Prompt & schema drift detection</strong></li>
+          <li><strong>Cost regression limits</strong> — prevent silent cost creep</li>
+          <li><strong>Signed offline license</strong> — CI-friendly, no SaaS dependency</li>
+        </ul>
+
+        <div class="divider"></div>
+
+        <div class="split" style="grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="card" style="background: rgba(17,28,51,0.55); border-color: rgba(51,65,85,0.7); padding: 16px;">
+            <h3 style="margin:0 0 6px;">Monthly</h3>
+            <div class="price">$29<span style="font-size:16px;font-weight:700;">/mo</span></div>
+            <div class="subtext">Cancel anytime</div>
+            <a href="https://buy.stripe.com/5kQeVd31J2448qeded1kA01" class="btn btn-outline" style="width:100%; text-align:center;">Subscribe Monthly</a>
+          </div>
+
+          <div class="card" style="background: rgba(17,28,51,0.55); border-color: rgba(59,130,246,0.55); padding: 16px;">
+            <h3 style="margin:0 0 6px;">Annual</h3>
+            <div class="price">$290<span style="font-size:16px;font-weight:700;">/yr</span></div>
+            <div class="subtext">2 months free</div>
+            <a href="https://buy.stripe.com/bJe9ATbyf9ww35U7TT1kA02" class="btn btn-primary" style="width:100%; text-align:center;">Subscribe Annually</a>
+          </div>
+        </div>
+
+        <p class="tiny" style="margin-top:14px;">
+          Pro distribution: GitHub Packages after purchase. Manual license issuance via email.
+        </p>
       </div>
     </div>
 
-    <p style="margin-top:40px;">
-      Pro is distributed via GitHub Packages after purchase.<br>
+    <div class="split" style="margin-top: 22px;">
+      <div class="card">
+        <h3>Install (Core)</h3>
+        <div class="codeblock"><pre>pip install aicert</pre></div>
+      </div>
+      <div class="card">
+        <h3>Install (Pro)</h3>
+        <div class="codeblock"><pre>pip install aicert-pro
+export AICERT_LICENSE="YOUR_LICENSE"
+aicert-pro license verify</pre></div>
+        <p class="tiny" style="margin-top:10px;">
+          You’ll receive install instructions and your signed license key after purchase.
+        </p>
+      </div>
+    </div>
+
+    <p class="subnote" style="margin-top: 16px;">
       Questions? <a href="mailto:mfifth@gmail.com">mfifth@gmail.com</a>
     </p>
   </div>
 
+  <div class="container faq" id="faq">
+    <h2>FAQ</h2>
+
+    <details>
+      <summary>Do I need API keys to try Aicert?</summary>
+      <p>
+        No. The built-in FakeAdapter (including chaos mode) lets you run the full evaluation pipeline locally without any provider keys.
+      </p>
+      <p>
+        For actual reliability testing in production, you should run Aicert against your real LLM providers (OpenAI, Anthropic, or compatible endpoints) using your provider keys.
+      </p>
+    </details>
+
+
+    <details>
+      <summary>Is this only for “agents”?</summary>
+      <p>No. It’s for any system that depends on structured output. APIs, extraction pipelines, classifiers, workflow steps, and more.</p>
+    </details>
+
+    <details>
+      <summary>What does Pro add that core doesn’t?</summary>
+      <p>Core measures. Pro enforces: baselines + regression checks that fail CI when output contracts drift across commits.</p>
+    </details>
+
+    <details>
+      <summary>Does Pro require a SaaS connection?</summary>
+      <p>No. Pro uses a signed offline license key designed for CI and isolated environments.</p>
+    </details>
+  </div>
+
   <footer class="container">
     <p>
-      MIT Licensed (Core) • Built by Matt Quinto<br>
+      Core is MIT licensed • Built by Matt Quinto •
       <a href="https://github.com/mfifth/aicert">GitHub</a>
+      • <a href="mailto:mfifth@gmail.com">mfifth@gmail.com</a>
     </p>
   </footer>
 
