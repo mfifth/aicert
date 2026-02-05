@@ -66,17 +66,6 @@ pip install -e .
 
 ---
 
-## Quickstart (No API Keys Required)
-
-Run with the built-in fake adapter:
-
-```bash
-aicert doctor examples/fake_chaos/aicert.yaml
-aicert stability examples/fake_chaos/aicert.yaml
-```
-
----
-
 ## What It Measures
 
 * **Compliance** — % of outputs matching JSON Schema
