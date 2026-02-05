@@ -217,7 +217,6 @@ aicert-pro baseline check aicert.yaml
 
 Aicert Pro uses signed offline license keys.
 
-* No SaaS dependency
 * No account login
 * CI-friendly
 * Time-limited per subscription
