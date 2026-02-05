@@ -221,7 +221,7 @@ Aicert Pro adds baseline regression enforcement for CI:
 - $29 / month
 - $290 / year (2 months free)
 
-Purchase: https://yourdomain.com
+Purchase: https://mfifth.github.io/aicert/
 
 ---
 
