@@ -3,307 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Aicert — Reliability tooling for structured LLM outputs</title>
-  <meta name="description" content="Aicert measures and enforces JSON stability for LLM outputs in CI. Validate schema compliance, quantify drift across runs, and block regressions before deployment." />
-  <style>
-    :root{
-      --bg:#0f172a;
-      --panel:#111c33;
-      --card:#1e293b;
-      --text:#e2e8f0;
-      --muted:#cbd5e1;
-      --muted2:#94a3b8;
-      --border:#334155;
-      --border2:#475569;
-      --accent:#3b82f6;
-      --accent2:#2563eb;
-      --good:#22c55e;
-      --warn:#f59e0b;
-      --bad:#ef4444;
-    }
-
-    html { scroll-behavior: smooth; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      margin: 0;
-      padding: 0;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.6;
-    }
-
-    .container {
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 40px 20px;
-    }
-
-    .topbar{
-      position: sticky;
-      top: 0;
-      background: rgba(15,23,42,0.8);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid rgba(51,65,85,0.7);
-      z-index: 100;
-    }
-    .topbar .container{
-      padding: 14px 20px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 16px;
-    }
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      font-weight: 800;
-      letter-spacing: 0.2px;
-    }
-    .dot{
-      width:10px;height:10px;border-radius:50%;
-      background: var(--accent);
-      box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
-    }
-    .nav{
-      display:flex;
-      gap: 14px;
-      align-items:center;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-    .nav a{
-      color: var(--muted2);
-      text-decoration:none;
-      font-weight:600;
-      font-size: 14px;
-    }
-    .nav a:hover{ color: var(--text); }
-
-    h1, h2, h3 {
-      margin: 0 0 14px;
-      color: #ffffff;
-      line-height: 1.25;
-    }
-
-    h1 { font-size: 44px; }
-    h2 { margin-top: 70px; font-size: 28px; }
-    h3 { font-size: 18px; }
-
-    p { margin: 0 0 18px; color: var(--muted); }
-
-    .hero {
-      padding-top: 70px;
-      padding-bottom: 30px;
-    }
-
-    .lead {
-      font-size: 17px;
-      max-width: 750px;
-    }
-
-    .pillrow{
-      display:flex;
-      gap:10px;
-      flex-wrap: wrap;
-      margin-top: 18px;
-      margin-bottom: 18px;
-    }
-    .pill{
-      border: 1px solid var(--border2);
-      color: var(--muted2);
-      padding: 6px 10px;
-      border-radius: 999px;
-      font-size: 13px;
-      font-weight: 600;
-      background: rgba(30,41,59,0.35);
-    }
-
-    .cta-row{
-      display:flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-top: 18px;
-      align-items: center;
-    }
-
-    .btn {
-      display: inline-block;
-      padding: 12px 18px;
-      border-radius: 8px;
-      text-decoration: none;
-      font-weight: 700;
-      transition: 0.2s ease;
-      font-size: 14px;
-      border: 1px solid transparent;
-    }
-
-    .btn-primary {
-      background: var(--accent);
-      color: white;
-    }
-    .btn-primary:hover { background: var(--accent2); }
-
-    .btn-outline {
-      border: 1px solid var(--border2);
-      color: var(--text);
-      background: transparent;
-    }
-    .btn-outline:hover { border-color: var(--muted2); }
-
-    .btn-ghost{
-      border: 1px solid transparent;
-      color: var(--muted2);
-      background: transparent;
-      padding-left: 10px;
-      padding-right: 10px;
-    }
-    .btn-ghost:hover{ color: var(--text); }
-
-    .subnote{
-      margin-top: 14px;
-      color: var(--muted2);
-      font-size: 14px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 22px;
-      margin-top: 26px;
-    }
-
-    .card {
-      background: rgba(30,41,59,0.85);
-      border: 1px solid rgba(51,65,85,0.7);
-      padding: 22px;
-      border-radius: 12px;
-    }
-
-    .highlight {
-      border: 2px solid rgba(59,130,246,0.75);
-      box-shadow: 0 0 0 4px rgba(59,130,246,0.08);
-    }
-
-    .metric-grid{
-      display:grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 14px;
-      margin-top: 20px;
-    }
-    .metric{
-      background: rgba(17,28,51,0.65);
-      border: 1px solid rgba(51,65,85,0.7);
-      border-radius: 12px;
-      padding: 16px 16px 14px;
-    }
-    .metric .k{
-      font-size: 12px;
-      color: var(--muted2);
-      font-weight: 700;
-      letter-spacing: 0.3px;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-    .metric .v{
-      font-size: 18px;
-      font-weight: 800;
-      color: #fff;
-      margin-bottom: 6px;
-    }
-    .metric .d{
-      font-size: 13px;
-      color: var(--muted);
-      margin:0;
-    }
-
-    .codeblock {
-      background: rgba(17,28,51,0.65);
-      border: 1px solid rgba(51,65,85,0.7);
-      border-radius: 12px;
-      padding: 16px;
-      overflow-x: auto;
-      font-size: 13px;
-      color: #e5e7eb;
-    }
-    pre { margin: 0; white-space: pre; }
-
-    .split{
-      display:grid;
-      grid-template-columns: 1.2fr 0.8fr;
-      gap: 22px;
-      align-items: start;
-      margin-top: 26px;
-    }
-    @media (max-width: 860px){
-      .split { grid-template-columns: 1fr; }
-    }
-
-    .price {
-      font-size: 34px;
-      font-weight: 900;
-      margin: 6px 0 0;
-    }
-    .subtext {
-      font-size: 14px;
-      color: var(--muted2);
-      margin: 8px 0 16px;
-    }
-
-    ul { margin: 10px 0 0; padding-left: 18px; }
-    li { color: var(--muted); margin: 6px 0; }
-
-    .tag{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--muted2);
-      margin-bottom: 10px;
-    }
-    .tag span{
-      width:8px;height:8px;border-radius:50%;
-      background: rgba(148,163,184,0.9);
-    }
-    .tag .prodot{ background: rgba(59,130,246,0.95); }
-
-    .divider{
-      height:1px;
-      background: rgba(51,65,85,0.7);
-      margin: 18px 0;
-    }
-
-    .faq details{
-      background: rgba(30,41,59,0.85);
-      border: 1px solid rgba(51,65,85,0.7);
-      border-radius: 12px;
-      padding: 14px 16px;
-      margin: 10px 0;
-    }
-    .faq summary{
-      cursor:pointer;
-      font-weight: 800;
-      color: #fff;
-    }
-    .faq p{ margin-top: 10px; margin-bottom: 0; color: var(--muted); }
-
-    footer {
-      margin-top: 90px;
-      padding-top: 28px;
-      border-top: 1px solid rgba(51,65,85,0.7);
-      font-size: 14px;
-      color: var(--muted2);
-    }
-    footer a{ color: var(--muted); }
-    footer a:hover{ color: var(--text); }
-
-    .tiny{
-      font-size: 13px;
-      color: var(--muted2);
-    }
-  </style>
+  <title>Aicert — Test and enforce LLM JSON reliability</title>
+  <meta name="description" content="Aicert tests and enforces the reliability of JSON returned by LLMs. Catch schema breaks, instability, latency spikes, and regressions before they reach production." />
 </head>
+
 <body>
   <div class="topbar">
     <div class="container">
@@ -318,76 +21,91 @@
     </div>
   </div>
 
+  <!-- HERO -->
   <div class="container hero">
-    <h1>Make structured LLM output reliable.</h1>
+    <h1>Your LLM doesn’t return the same JSON every time.</h1>
+
     <p class="lead">
-      Aicert measures and enforces stability for JSON produced by LLMs.
-      Detect schema drift, quantify variability, and block regressions in CI —
-      before they reach production.
+      If your backend parses LLM responses and relies on specific fields,
+      you need to test that behavior.
+      Aicert runs your prompts repeatedly, validates the output against your schema,
+      and alerts you when it changes — before you deploy.
     </p>
 
     <div class="pillrow">
-      <div class="pill">Schema validation</div>
-      <div class="pill">Stability measurement</div>
-      <div class="pill">Latency tracking</div>
-      <div class="pill">CI enforcement</div>
+      <div class="pill">Validate JSON against your schema</div>
+      <div class="pill">Measure output consistency</div>
+      <div class="pill">Track latency across runs</div>
+      <div class="pill">Fail CI when behavior changes</div>
     </div>
 
     <div class="cta-row">
-      <a href="https://github.com/mfifth/aicert" class="btn btn-outline">View Open Source (MIT)</a>
-      <a href="https://buy.stripe.com/5kQeVd31J2448qeded1kA01" class="btn btn-primary">Get Aicert Pro</a>
+      <a href="https://github.com/mfifth/aicert" class="btn btn-outline">
+        View Open Source (MIT)
+      </a>
+      <a href="https://buy.stripe.com/5kQeVd31J2448qeded1kA01" class="btn btn-primary">
+        Get Aicert Pro
+      </a>
     </div>
   </div>
 
+  <!-- PROBLEM -->
   <div class="container">
     <h2>The Problem</h2>
+
     <p>
-      LLMs are probabilistic systems.
+      LLMs are probabilistic. Even when you ask for structured JSON,
+      the exact output can vary across runs.
     </p>
+
     <p>
-      If your application depends on structured JSON generated by an LLM,
-      you’ve introduced an invisible contract into your backend.
+      If your application expects fields like <code>status</code>,
+      <code>confidence</code>, or <code>action</code>, you’ve created a contract
+      between the model and your backend.
     </p>
-    <p>
-      That contract can drift:
-    </p>
+
+    <p>That contract can break:</p>
+
     <ul>
-      <li>A model update subtly changes output shape</li>
-      <li>A prompt tweak alters field behavior</li>
-      <li>Temperature changes increase instability</li>
-      <li>Outputs pass basic tests but fail under repetition</li>
+      <li>A model update subtly changes field names or structure</li>
+      <li>A prompt tweak alters output shape</li>
+      <li>Temperature changes increase variability</li>
+      <li>Latency spikes slow downstream systems</li>
+      <li>A missing field causes a 500 in production</li>
     </ul>
+
     <p>
-      Everything appears fine — until production breaks.
+      Everything works — until it doesn’t.
     </p>
   </div>
 
+  <!-- HOW IT WORKS -->
   <div class="container" id="how">
     <h2>How Aicert Works</h2>
 
     <div class="split">
       <div class="card">
         <p>
-          Aicert runs your structured prompts across defined test cases multiple times,
-          then computes reliability metrics:
+          Aicert runs your prompt across your test cases multiple times,
+          then measures what actually happens:
         </p>
 
         <ul>
-          <li>Schema compliance</li>
-          <li>Output stability across runs</li>
-          <li>Latency percentiles</li>
-          <li>Drift between configurations</li>
+          <li><strong>Schema compliance</strong> — Does the JSON match your schema?</li>
+          <li><strong>Stability</strong> — Does it return the same structure repeatedly?</li>
+          <li><strong>Latency</strong> — Are response times consistent?</li>
+          <li><strong>Differences across configs</strong> — What changes between models or temperatures?</li>
         </ul>
 
         <p>
-          You can define thresholds and enforce them in CI.
+          You define thresholds. Aicert enforces them in CI.
         </p>
 
         <div class="divider"></div>
 
         <div class="codeblock">
-          <pre>pip install aicert
-pip install aicert-pro
+<pre>pip install aicert
+aicert init
 aicert ci aicert.yaml</pre>
         </div>
       </div>
@@ -395,9 +113,9 @@ aicert ci aicert.yaml</pre>
       <div class="card">
         <h3>What This Enables</h3>
         <ul>
-          <li>Detect schema breakage before deployment</li>
+          <li>Catch schema breaks before deployment</li>
           <li>Measure repeatability under real conditions</li>
-          <li>Catch regressions from prompt or model changes</li>
+          <li>Detect regressions from model or prompt changes</li>
           <li>Block unreliable output from shipping</li>
         </ul>
 
@@ -405,15 +123,16 @@ aicert ci aicert.yaml</pre>
 
         <h3>Who This Is For</h3>
         <ul>
-          <li>Teams shipping LLM-powered APIs</li>
+          <li>Teams shipping LLM-backed APIs</li>
           <li>Structured extraction pipelines</li>
           <li>Classification systems</li>
-          <li>Workflows where JSON drives downstream logic</li>
+          <li>Automation workflows driven by JSON</li>
         </ul>
       </div>
     </div>
   </div>
 
+  <!-- USE CASES -->
   <div class="container" id="usecases">
     <h2>Where It Fits</h2>
 
@@ -421,7 +140,7 @@ aicert ci aicert.yaml</pre>
       <div class="card">
         <h3>LLM-backed APIs</h3>
         <p>
-          Ensure responses match schema and remain stable across deployments.
+          Ensure responses always match the schema your backend expects.
         </p>
       </div>
 
@@ -433,21 +152,22 @@ aicert ci aicert.yaml</pre>
       </div>
 
       <div class="card">
-        <h3>Automation & Agents</h3>
+        <h3>Classification Systems</h3>
         <p>
-          Prevent silent JSON drift in workflow orchestration systems.
+          Detect output drift when prompts or models change.
         </p>
       </div>
 
       <div class="card">
-        <h3>Production Monitoring in CI</h3>
+        <h3>Automation & Workflows</h3>
         <p>
-          Turn non-deterministic output into measurable reliability metrics.
+          Prevent silent JSON changes from breaking orchestration logic.
         </p>
       </div>
     </div>
   </div>
 
+  <!-- PRICING -->
   <div class="container" id="pricing">
     <h2>Core vs Pro</h2>
 
@@ -460,80 +180,87 @@ aicert ci aicert.yaml</pre>
           <li>Latency tracking</li>
           <li>CI threshold checks</li>
         </ul>
+
         <div class="divider"></div>
-        <a class="btn btn-outline" href="https://github.com/mfifth/aicert">Install Free</a>
+
+        <a class="btn btn-outline" href="https://github.com/mfifth/aicert">
+          Install Free
+        </a>
       </div>
 
       <div class="card highlight">
-      <h3>Pro — Enforcement Layer</h3>
-      <p class="tiny">
-        Lock known-good behavior and automatically block regressions.
-      </p>
+        <h3>Pro — Lock and Enforce Reliability</h3>
 
-      <ul>
-        <li>Baseline locking</li>
-        <li>Regression enforcement across commits</li>
-        <li>Prompt & schema drift detection</li>
-        <li>Cost regression limits</li>
-        <li>Signed offline license (CI-ready)</li>
-      </ul>
+        <p class="tiny">
+          Core measures reliability. Pro enforces it.
+        </p>
 
-      <div class="divider"></div>
+        <ul>
+          <li><strong>Baseline locking</strong> — Capture a known-good state</li>
+          <li><strong>Regression enforcement</strong> — Fail CI when reliability drops</li>
+          <li><strong>Prompt & schema drift detection</strong></li>
+          <li><strong>Cost regression limits</strong></li>
+          <li><strong>Signed offline license</strong> — CI-ready, no SaaS dependency</li>
+        </ul>
 
-      <div style="margin-bottom:20px;">
-        <div style="font-weight:700;">Monthly</div>
-        <div class="price">$29<span style="font-size:16px;">/month</span></div>
-        <a href="https://buy.stripe.com/5kQeVd31J2448qeded1kA01"
-          class="btn btn-outline"
-          style="margin-top:10px;">
-          Subscribe Monthly
-        </a>
+        <div class="divider"></div>
 
-        <div style="margin-top:25px;">
-          <div style="font-weight:700;">
-            Annual <span style="color:#3b82f6;">(Best Value)</span>
-          </div>
-          <div class="price">$290<span style="font-size:16px;">/year</span></div>
-          <div class="subtext">2 months free</div>
-          <a href="https://buy.stripe.com/bJe9ATbyf9ww35U7TT1kA02"
-            class="btn btn-primary"
+        <div style="margin-bottom:20px;">
+          <div style="font-weight:700;">Monthly</div>
+          <div class="price">$29<span style="font-size:16px;">/month</span></div>
+          <a href="https://buy.stripe.com/5kQeVd31J2448qeded1kA01"
+            class="btn btn-outline"
             style="margin-top:10px;">
-            Subscribe Annually
+            Subscribe Monthly
           </a>
+
+          <div style="margin-top:25px;">
+            <div style="font-weight:700;">
+              Annual <span style="color:#3b82f6;">(Best Value)</span>
+            </div>
+            <div class="price">$290<span style="font-size:16px;">/year</span></div>
+            <div class="subtext">2 months free</div>
+            <a href="https://buy.stripe.com/bJe9ATbyf9ww35U7TT1kA02"
+              class="btn btn-primary"
+              style="margin-top:10px;">
+              Subscribe Annually
+            </a>
+          </div>
         </div>
       </div>
     </div>
+
+    <p style="margin-top:30px;">
+      Questions? <a href="mailto:mfifth@gmail.com">mfifth@gmail.com</a>
+    </p>
   </div>
 
-  <p style="margin-top:30px;">
-    Questions? <a href="mailto:mfifth@gmail.com">mfifth@gmail.com</a>
-  </p>
-
+  <!-- FAQ -->
   <div class="container faq" id="faq">
     <h2>FAQ</h2>
 
     <details>
       <summary>Do I need API keys?</summary>
       <p>
-        For production evaluation, yes — Aicert runs against your configured LLM providers.
-        It is designed to measure real system behavior under your actual configuration.
+        For real evaluation, yes. Aicert runs against your configured LLM providers
+        to measure actual behavior under your production settings.
       </p>
     </details>
 
     <details>
       <summary>Is this only for agents?</summary>
       <p>
-        No. It applies to any system that depends on structured output from an LLM.
+        No. It applies to any system that depends on structured JSON from an LLM.
       </p>
     </details>
 
     <details>
       <summary>What does Pro add?</summary>
       <p>
-        Core measures reliability. Pro enforces it by locking baselines and failing CI when regressions occur.
+        Core tells you when behavior changes. Pro prevents those changes
+        from shipping by enforcing baselines in CI.
       </p>
     </details>
-
   </div>
 
   <footer class="container">
@@ -545,5 +272,4 @@ aicert ci aicert.yaml</pre>
   </footer>
 
 </body>
-
 </html>
