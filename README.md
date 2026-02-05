@@ -209,14 +209,19 @@ jobs:
 
 ## Aicert Pro
 
-Aicert Pro adds:
+Aicert Pro adds baseline regression enforcement for CI:
 
-* Baseline saving and comparison
-* Regression enforcement across commits
-* Prompt/schema drift detection
-* Cost regression protection
+- Save and commit baselines
+- Detect stability/compliance regressions
+- Prompt and schema drift detection
+- Cost regression protection
 
-Learn more: **[https://yourdomain.com](https://yourdomain.com)**
+### Pricing
+
+- $29 / month
+- $290 / year (2 months free)
+
+Purchase: https://yourdomain.com
 
 ---
 

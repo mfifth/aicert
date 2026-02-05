@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aicert — CI for Structured LLM Outputs</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #0f172a;
+      color: #e2e8f0;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    h1, h2, h3 {
+      margin-bottom: 16px;
+      color: #ffffff;
+    }
+
+    h1 {
+      font-size: 44px;
+      line-height: 1.2;
+    }
+
+    h2 {
+      margin-top: 80px;
+      font-size: 28px;
+    }
+
+    p {
+      margin-bottom: 20px;
+      color: #cbd5e1;
+    }
+
+    .hero {
+      padding-top: 80px;
+      padding-bottom: 80px;
+    }
+
+    .btn {
+      display: inline-block;
+      margin-right: 12px;
+      margin-top: 10px;
+      padding: 12px 20px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: 0.2s ease;
+    }
+
+    .btn-primary {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #2563eb;
+    }
+
+    .btn-outline {
+      border: 1px solid #475569;
+      color: #e2e8f0;
+    }
+
+    .btn-outline:hover {
+      border-color: #94a3b8;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 30px;
+      margin-top: 40px;
+    }
+
+    .card {
+      background: #1e293b;
+      padding: 30px;
+      border-radius: 8px;
+    }
+
+    .highlight {
+      border: 2px solid #3b82f6;
+    }
+
+    .price {
+      font-size: 34px;
+      font-weight: bold;
+      margin: 10px 0 5px;
+    }
+
+    .subtext {
+      font-size: 14px;
+      color: #94a3b8;
+      margin-bottom: 20px;
+    }
+
+    ul {
+      padding-left: 18px;
+    }
+
+    footer {
+      margin-top: 100px;
+      padding-top: 40px;
+      border-top: 1px solid #334155;
+      font-size: 14px;
+      color: #94a3b8;
+    }
+
+    a {
+      color: #60a5fa;
+    }
+
+    code {
+      background: #1e293b;
+      padding: 4px 6px;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container hero">
+    <h1>CI for Structured LLM Outputs</h1>
+    <p>
+      Measure stability. Enforce JSON contracts. Detect regressions before deployment.
+    </p>
+
+    <a href="https://github.com/YOUR_USERNAME/aicert" class="btn btn-outline">
+      View on GitHub (MIT)
+    </a>
+
+    <a href="#pricing" class="btn btn-primary">
+      Get Aicert Pro
+    </a>
+  </div>
+
+  <div class="container">
+    <h2>The Problem</h2>
+    <p>
+      LLMs are non-deterministic. Structured JSON outputs drift across runs.
+      Prompt changes, model upgrades, and temperature tweaks introduce silent regressions.
+    </p>
+    <p>
+      Traditional CI does not detect schema instability or structural drift.
+    </p>
+  </div>
+
+  <div class="container">
+    <h2>What Aicert Does</h2>
+
+    <div class="grid">
+      <div class="card">
+        <h3>Aicert (Free, MIT)</h3>
+        <ul>
+          <li>JSON Schema validation</li>
+          <li>Stability measurement across runs</li>
+          <li>Latency tracking (P50 / P95)</li>
+          <li>Threshold-based CI gating</li>
+          <li>Multi-provider testing</li>
+          <li>Fake + chaos testing</li>
+        </ul>
+      </div>
+
+      <div class="card highlight">
+        <h3>Aicert Pro</h3>
+        <ul>
+          <li>Baseline registry</li>
+          <li>Regression enforcement across commits</li>
+          <li>Prompt drift detection</li>
+          <li>Schema drift enforcement</li>
+          <li>Cost regression protection</li>
+          <li>Signed offline license (no SaaS required)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="container" id="pricing">
+    <h2>Pricing</h2>
+
+    <div class="grid">
+      <div class="card">
+        <h3>Monthly</h3>
+        <div class="price">$29<span style="font-size:16px;">/month</span></div>
+        <div class="subtext">Cancel anytime</div>
+        <a href="https://buy.stripe.com/5kQeVd31J2448qeded1kA01" class="btn btn-outline">
+          Subscribe Monthly
+        </a>
+      </div>
+
+      <div class="card highlight">
+        <h3>Annual</h3>
+        <div class="price">$290<span style="font-size:16px;">/year</span></div>
+        <div class="subtext">2 months free</div>
+        <a href="https://buy.stripe.com/bJe9ATbyf9ww35U7TT1kA02" class="btn btn-primary">
+          Subscribe Annually
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <h2>Install</h2>
+    <p>
+      Free:
+    </p>
+    <code>pip install aicert</code>
+
+    <p style="margin-top:30px;">
+      Pro (after purchase):
+    </p>
+    <code>pip install aicert-pro</code>
+  </div>
+
+  <footer class="container">
+    <p>
+      MIT Licensed (Core) • Built by Matt Quinto<br>
+      <a href="https://github.com/mfifth/aicert">GitHub</a>
+    </p>
+  </footer>
+
+</body>
+</html>
